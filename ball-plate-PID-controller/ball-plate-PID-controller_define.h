@@ -8,6 +8,7 @@
  */
 
 #include <Arduino_FreeRTOS.h>
+#include <IRremote.h>
 
 /// led pin output
 ///@{
@@ -20,8 +21,16 @@
 
 /// for FREERTOS scheduling
 ///@{
-TaskHandle_t RT1handle, startuphandle;
+TaskHandle_t RT1handle, startuphandle, readRemotehandle;
               
 void RT1( void *pvParameters );
 void startup( void *pvParameters );
+void readRemote( void *pvParameters );
 ///@}
+
+/// IR remote input
+///@{
+int RECV_PIN = 10;    
+IRrecv irrecv(RECV_PIN);     
+decode_results results;
+///@} 

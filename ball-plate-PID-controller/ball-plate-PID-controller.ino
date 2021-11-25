@@ -20,6 +20,10 @@
  *    @author Connor Lowe
  */
 void setup() {
+  Serial.begin(19200);
+  while (!Serial) { 
+  } 
+  
   xTaskCreate(startup, "Startup", 128, NULL, 2, &startuphandle);
   
   vTaskStartScheduler();
@@ -40,6 +44,7 @@ void loop() {
  */
 void startup(void *pvParameters) {
   xTaskCreate(RT1, "Blink", 100, NULL, 2, &RT1handle);
+  xTaskCreate(readRemote, "IR remote input", 200, NULL, 2, &readRemotehandle);
   while (1) {
   }
 }
@@ -56,5 +61,83 @@ void RT1(void *pvParameters) {
     vTaskDelay(500 / portTICK_PERIOD_MS);
     CLEARLEDPORT;
     vTaskDelay(500 / portTICK_PERIOD_MS);
+  }
+}
+
+/** 
+ *  readRemote(void *p)
+ *     This funciton reads the input from the IR remote and manipulates the setpoint.
+ *     @author Connor Lowe
+ */
+void readRemote(void *pvParameters) {    
+  irrecv.enableIRIn();  
+  while (1) {
+    if (irrecv.decode(&results)) {         // Returns 0 if no data ready, 1 if data ready.          
+       Serial.println(results.value, HEX); //prints the value a a button press   
+
+       // manipute the setpoints 
+       switch (results.value) {
+          case 0xFFA25D:           // press 1
+
+          break;
+
+          case 0xFF629D:           // press 2
+
+          break;
+
+          case 0xFFE21D:           // press 3
+
+          break;
+
+          case 0xFF22DD:           // press 4
+
+          break;
+
+          case 0xFF025D:           // press 5
+
+          break;
+
+          case 0xFFC23D:           // press 6
+
+          break;
+
+          case 0xFFE01F:           // press 7
+
+          break;
+
+          case 0xFFA857:           // press 8
+
+          break;
+
+          case 0xFF906F:           // press 9
+
+          break;
+
+          case 0xFF9867:           // press 0
+
+          break;
+
+          case 0xFF38C7:           // press ok
+
+          break;
+
+          case 0xFF10EF:           // press left
+
+          break;
+
+          case 0xFF18E7:           // press up
+
+          break;
+
+          case 0xFF5AA5:           // press right
+
+          break;
+
+          case 0xFF4AB5:           // press down
+
+          break;
+       }
+       irrecv.resume(); // Restart the ISR state machine and Receive the next value     
+    }    
   }
 }
