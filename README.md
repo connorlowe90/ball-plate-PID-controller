@@ -18,10 +18,6 @@ One task will be to blink the onboard LED to ensure proper timing and an overall
 
 Anorher task reads from an IR remote so that it can change the x and y setpoints.
 
-<<<<<<< Updated upstream
-Now to work on reading inputs from the touch screen and the PID control equation.
-=======
 Antoher task reads inputs from the touch screen.
 
 And another task sets the PID control equation.
->>>>>>> Stashed changes
