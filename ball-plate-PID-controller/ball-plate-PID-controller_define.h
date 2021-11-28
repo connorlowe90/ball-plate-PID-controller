@@ -68,10 +68,10 @@ double Kd = 0.15;
 PID pidX(&inputX, &servoXangle, &setpointX, Kp, Ki, Kd, DIRECT);
 PID pidY(&inputY, &servoYangle, &setpointY, Kp, Ki, Kd, DIRECT);
 
-FilterOnePole xLowpass (LOWPASS, 100.0);
-FilterOnePole yLowpass (LOWPASS, 100.0); 
+FilterOnePole xLowpass (LOWPASS, 45.0);
+FilterOnePole yLowpass (LOWPASS, 45.0); 
 
-FilterOnePole outxLowpass (LOWPASS, 100.0);
-FilterOnePole outyLowpass (LOWPASS, 100.0);
+FilterOnePole outxLowpass (LOWPASS, 25.0);
+FilterOnePole outyLowpass (LOWPASS, 25.0);
 
 ///@} 

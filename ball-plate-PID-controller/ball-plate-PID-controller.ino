@@ -77,12 +77,8 @@ void turnToAngle(void *pvParameters) {
   servoX.attach(SERVOXPIN);
   servoY.attach(SERVOYPIN);        
   while (1) {
-//    Serial.println(servoXangle);
-//    Serial.println(servoYangle);
-    outxLowpass.input(servoXangle);
-    outyLowpass.input(servoYangle);
-    servoX.write(outxLowpass.output());
-    servoY.write(outyLowpass.output());
+    servoX.write(map(servoXangle, 0, 255, 0, 180));
+    servoY.write(map(servoYangle, 0, 255, 0, 180));
   }
 }
 
@@ -92,8 +88,8 @@ void turnToAngle(void *pvParameters) {
  *     @author Connor Lowe
  */
 void pid(void *pvParameters) {
-  setpointX = 255/2;
-  setpointY = 255/2;
+  setpointX = 1023/2;
+  setpointY = 1023/2;
   pidX.SetMode(AUTOMATIC);
   pidY.SetMode(AUTOMATIC);
   pidX.SetTunings(Kp, Ki, Kd);   
@@ -110,16 +106,13 @@ void pid(void *pvParameters) {
  *     @author Connor Lowe
  */
 void readTouch(void *pvParameters) {  
-  inputX = 255/2;
-  inputY = 255/2;
+  inputX = 1023/2;
+  inputY = 1023/2;
   while (1) {
-    xLowpass.input(map(analogRead(A0), 0, 1023, 0, 255));
-    yLowpass.input(map(analogRead(A1), 0, 1023, 0, 255));
+    xLowpass.input(analogRead(A0));
+    yLowpass.input(analogRead(A1));
     inputX = xLowpass.output();
     inputY = yLowpass.output();
-    vTaskDelay(50 / portTICK_PERIOD_MS);
-    Serial.println(inputX);
-    Serial.println(inputY);
   }
 }
 
