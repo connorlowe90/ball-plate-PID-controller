@@ -77,8 +77,8 @@ void turnToAngle(void *pvParameters) {
   servoX.attach(SERVOXPIN);
   servoY.attach(SERVOYPIN);        
   while (1) {
-    servoX.write(map(servoXangle, 0, 255, 0, 180));
-    servoY.write(map(servoYangle, 0, 255, 0, 180));
+    servoX.write(90);
+    servoY.write(90);
   }
 }
 
@@ -109,10 +109,8 @@ void readTouch(void *pvParameters) {
   inputX = 1023/2;
   inputY = 1023/2;
   while (1) {
-    xLowpass.input(analogRead(A0));
-    yLowpass.input(analogRead(A1));
-    inputX = xLowpass.output();
-    inputY = yLowpass.output();
+    inputX = analogRead(A0);
+    inputY = analogRead(A1);
   }
 }
 
