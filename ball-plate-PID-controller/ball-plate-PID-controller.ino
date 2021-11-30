@@ -74,11 +74,27 @@ void RT1(void *pvParameters) {
  *     @author Connor Lowe
  */
 void turnToAngle(void *pvParameters) {
-  servoX.attach(SERVOXPIN);
-  servoY.attach(SERVOYPIN);        
+  SETMOTOR1DDR;
+  SETMOTOR2DDR;
+  TIMER4ON;
+  TIMER3ON;
+  TIMER4REGA = 0; TIMER4REGB = 0;
+  TIMER3REGA = 0; TIMER3REGB = 0;
+  TCCR4A = (TCCR4A & B00111100) | B10000010;   //Phase and frequency correct, Non-inverting mode, TOP defined by ICR1
+  TCCR4B = (TCCR4B & B11100000) | B00010001;   //No prescale
+  TCCR3A = (TCCR3A & B00111100) | B10000010;   //Phase and frequency correct, Non-inverting mode, TOP defined by ICR1
+  TCCR3B = (TCCR3B & B11100000) | B00010001;   //No prescale
+  ICR4 = 0xFFFF; 
+  ICR3 = 0xFFFF;       
   while (1) {
-    servoX.write(map(servoXangle, 0, 255, 0, 180));
-    servoY.write(map(servoYangle, 0, 255, 0, 180));
+    TIMERCOMPARE4A = (CLOCKFREQ / (TWO*666)) + 1;
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+    TIMERCOMPARE4A = (CLOCKFREQ / (TWO*700)) + 1;
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+    TIMERCOMPARE4A = (CLOCKFREQ / (TWO*600)) + 1;
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+
+    TIMERCOMPARE3A = COMPARE_196;   
   }
 }
 
