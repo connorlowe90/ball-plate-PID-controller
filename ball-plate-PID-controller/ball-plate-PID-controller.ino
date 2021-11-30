@@ -125,10 +125,8 @@ void readTouch(void *pvParameters) {
   inputX = 1023/2;
   inputY = 1023/2;
   while (1) {
-    xLowpass.input(analogRead(A0));
-    yLowpass.input(analogRead(A1));
-    inputX = xLowpass.output();
-    inputY = yLowpass.output();
+    inputX = analogRead(A0);
+    inputY = analogRead(A1);
   }
 }
 
