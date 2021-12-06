@@ -46,7 +46,7 @@ void startup(void *pvParameters) {
   xTaskCreate(RT1, "Blink", 100, NULL, 2, &RT1handle);
   xTaskCreate(readRemote, "IR remote input", 200, NULL, 2, &readRemotehandle);
   xTaskCreate(readTouch, "touch screen input", 200, NULL, 2, &readTouchhandle);
-  xTaskCreate(turnToAngle, "servo movement",200, NULL, 2, &turnToAnglehandle);
+  xTaskCreate(turnToAngle, "motorTest", 200, NULL, 2, &turnToAnglehandle);
   xTaskCreate(pid, "pid computation", 200, NULL, 2, &pidhandle);
   while (1) {
   }
@@ -74,27 +74,53 @@ void RT1(void *pvParameters) {
  *     @author Connor Lowe
  */
 void turnToAngle(void *pvParameters) {
-  SETMOTOR1DDR;
-  SETMOTOR2DDR;
-  TIMER4ON;
-  TIMER3ON;
-  TIMER4REGA = 0; TIMER4REGB = 0;
-  TIMER3REGA = 0; TIMER3REGB = 0;
-  TCCR4A = (TCCR4A & B00111100) | B10000010;   //Phase and frequency correct, Non-inverting mode, TOP defined by ICR1
-  TCCR4B = (TCCR4B & B11100000) | B00010001;   //No prescale
-  TCCR3A = (TCCR3A & B00111100) | B10000010;   //Phase and frequency correct, Non-inverting mode, TOP defined by ICR1
-  TCCR3B = (TCCR3B & B11100000) | B00010001;   //No prescale
-  ICR4 = 0xFFFF; 
-  ICR3 = 0xFFFF;       
-  while (1) {
-    TIMERCOMPARE4A = (CLOCKFREQ / (TWO*666)) + 1;
-    vTaskDelay(500 / portTICK_PERIOD_MS);
-    TIMERCOMPARE4A = (CLOCKFREQ / (TWO*700)) + 1;
-    vTaskDelay(500 / portTICK_PERIOD_MS);
-    TIMERCOMPARE4A = (CLOCKFREQ / (TWO*600)) + 1;
-    vTaskDelay(500 / portTICK_PERIOD_MS);
+  // set servo to 90 degrees
+  servoX.attach(servoXpin);
+  servoY.attach(servoYpin);
+  servoX.write(90);
+  servoY.write(90);
+  vTaskDelay(500 / portTICK_PERIOD_MS);
+//  servoX.detach();
+//  servoY.detach();
 
-    TIMERCOMPARE3A = COMPARE_196;   
+//  // set motor timers up 
+//  SETMOTOR1DDR;
+//  SETMOTOR2DDR;
+//  TIMER4ON;
+//  TIMER3ON;
+//  TIMER4REGA = 0; TIMER4REGB = 0;
+//  TIMER3REGA = 0; TIMER3REGB = 0;
+//  TCCR4A = (TCCR4A & B00111100) | B10000010;   //Phase and frequency correct, Non-inverting mode, TOP defined by ICR1
+//  TCCR4B = (TCCR4B & B11100000) | B00010001;   //No prescale
+//  TCCR3A = (TCCR3A & B00111100) | B10000010;   //Phase and frequency correct, Non-inverting mode, TOP defined by ICR1
+//  TCCR3B = (TCCR3B & B11100000) | B00010001;   //No prescale
+//  ICR4 = 0xFFFF; 
+//  ICR3 = 0xFFFF;
+//  TIMERCOMPARE4A = (CLOCKFREQ / (TWO*666)) + 1;
+//  TIMERCOMPARE3A = (CLOCKFREQ / (TWO*666)) + 1;     
+
+    // setpoints
+    setpointX = 440;
+    setpointY = 530;
+  while (1) {
+    vTaskDelay(50 / portTICK_PERIOD_MS);
+    servoX.write(servoXangle);
+    servoY.write(servoYangle);
+//    if (inputX == setpointX) {
+//          TIMERCOMPARE4A = (CLOCKFREQ / (TWO*666)) + 1; // x 
+//       } else if (inputX > setpointX) {
+//          TIMERCOMPARE4A = (CLOCKFREQ / (TWO*600)) + 1;
+//       } else if (inputX < setpointX) {
+//          TIMERCOMPARE4A = (CLOCKFREQ / (TWO*700)) + 1;
+//       }
+//
+//       if (inputY == setpointY) {
+//          TIMERCOMPARE3A = (CLOCKFREQ / (TWO*666)) + 1; // x 
+//       } else if (inputY > setpointY) {
+//          TIMERCOMPARE3A = (CLOCKFREQ / (TWO*600)) + 1;
+//       } else if (inputY < setpointY) {
+//          TIMERCOMPARE3A = (CLOCKFREQ / (TWO*700)) + 1;
+//       }
   }
 }
 
@@ -104,15 +130,15 @@ void turnToAngle(void *pvParameters) {
  *     @author Connor Lowe
  */
 void pid(void *pvParameters) {
-  setpointX = 1023/2;
-  setpointY = 1023/2;
   pidX.SetMode(AUTOMATIC);
   pidY.SetMode(AUTOMATIC);
   pidX.SetTunings(Kp, Ki, Kd);   
-  pidY.SetTunings(Kp, Ki, Kd);   
+  pidY.SetTunings(Kp, Ki, Kd);  
+  vTaskDelay(500 / portTICK_PERIOD_MS); 
   while (1) {
     pidX.Compute();
     pidY.Compute();
+    vTaskDelay(50 / portTICK_PERIOD_MS);
   }
 }
 
@@ -122,11 +148,44 @@ void pid(void *pvParameters) {
  *     @author Connor Lowe
  */
 void readTouch(void *pvParameters) {  
-  inputX = 1023/2;
-  inputY = 1023/2;
   while (1) {
-    inputX = analogRead(A0);
-    inputY = analogRead(A1);
+    // Read y
+      // read from this pin
+      pinMode(xHigh, INPUT);
+      
+      // make tristate
+      pinMode(xLow, INPUT);
+      digitalWrite(xLow, LOW);
+  
+      // form a voltage divider
+      pinMode(yHigh, OUTPUT);
+      pinMode(yLow, OUTPUT);
+      digitalWrite(yHigh, HIGH);
+      digitalWrite(yLow,  LOW);
+  
+      // read voltage for y in
+      inputY = analogRead(xHigh);
+
+    // Read x
+      // read from this pin
+      pinMode(yHigh, INPUT);
+      
+      // make tristate
+      pinMode(yLow, INPUT);
+      digitalWrite(yLow, LOW);
+  
+      // form a voltage divider
+      pinMode(xHigh, OUTPUT);
+      pinMode(xLow, OUTPUT);
+      digitalWrite(xHigh, HIGH);
+      digitalWrite(xLow,  LOW);
+  
+      // read voltage for y in
+      inputX = analogRead(yHigh);
+      vTaskDelay(50 / portTICK_PERIOD_MS);
+
+    Serial.println(inputY);
+    Serial.println(inputX);
   }
 }
 
@@ -144,48 +203,30 @@ void readRemote(void *pvParameters) {
        // manipute the setpoints 
        switch (results.value) {
           case 0xFFA25D:           // press 1
-            setpointX = 255/4;
-            setpointY = 255/4;
           break;
 
           case 0xFF629D:           // press 2
-            setpointX = 255/2;
-            setpointY = 255/4;
           break;
 
           case 0xFFE21D:           // press 3
-            setpointX = 3*255/4;
-            setpointY = 255/4;
           break;
 
           case 0xFF22DD:           // press 4
-            setpointX = 255/4;
-            setpointY = 255/2;
           break;
 
           case 0xFF025D:           // press 5
-            setpointX = 255/2;
-            setpointY = 255/2;
           break;
 
           case 0xFFC23D:           // press 6
-            setpointX = 3*255/4;
-            setpointY = 255/2;
           break;
 
           case 0xFFE01F:           // press 7
-            setpointX = 255/4;
-            setpointY = 3*255/4;
           break;
 
           case 0xFFA857:           // press 8
-            setpointX = 255/2;
-            setpointY = 3*255/4;
           break;
 
           case 0xFF906F:           // press 9
-            setpointX = 3*255/4;
-            setpointY = 3*255/4;
           break;
 
           case 0xFF9867:           // press 0

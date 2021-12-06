@@ -9,8 +9,8 @@
 
 #include <Arduino_FreeRTOS.h>
 #include <IRremote.h>
+#include <Servo.h>
 #include <PID_v1.h>
-#include <Filters.h>
 
 /// led pin output
 ///@{
@@ -19,6 +19,18 @@
 #define SETLEDDDR   LEDDDR |= B00000001
 #define SETLEDPORT  LEDPORT |= B00000001
 #define CLEARLEDPORT  LEDPORT &= !(B00000001)
+///@}
+
+/// touch screen input 
+///@{
+int yLow  = A5;
+int yHigh = A3;
+
+int xLow  = A2;
+int xHigh = A4;
+
+double inputX;
+double inputY;
 ///@}
 
 /// for FREERTOS scheduling
@@ -42,6 +54,12 @@ decode_results results;
 
 /// Servo motors
 ///@{
+Servo servoX;
+Servo servoY;
+
+int servoXpin = 6;
+int servoYpin = 5;
+
 double servoXangle;
 double servoYangle;
 
@@ -109,12 +127,6 @@ double servoYangle;
 #define COMPARE_1      62500
 ///@} 
 
-/// touch screen input
-///@{
-double inputX;
-double inputY;
-///@} 
-
 /// PID control
 ///@{
 double setpointX;
@@ -125,11 +137,4 @@ double Kd = 0.15;
 
 PID pidX(&inputX, &servoXangle, &setpointX, Kp, Ki, Kd, DIRECT);
 PID pidY(&inputY, &servoYangle, &setpointY, Kp, Ki, Kd, DIRECT);
-
-//FilterOnePole xLowpass (LOWPASS, 45.0);
-//FilterOnePole yLowpass (LOWPASS, 45.0); 
-//
-//FilterOnePole outxLowpass (LOWPASS, 25.0);
-//FilterOnePole outyLowpass (LOWPASS, 25.0);
-
 ///@} 
