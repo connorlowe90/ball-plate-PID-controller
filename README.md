@@ -16,8 +16,8 @@ This system utilized FREE RTOS for scheduling.
 
 One task will be to blink the onboard LED to ensure proper timing and an overall sanity check. (RT1)
 
-Anorher task reads from an IR remote so that it can change the x and y setpoints.
+Another task reads from an IR remote so that it can change the x and y setpoints.
 
-Antoher task reads inputs from the touch screen.
+Another task reads inputs from the touch screen.
 
 And another task sets the PID control equation.
