@@ -47,7 +47,7 @@ void startup(void *pvParameters) {
   xTaskCreate(readRemote, "IR remote input", 200, NULL, 2, &readRemotehandle);
   xTaskCreate(readTouch, "touch screen input", 200, NULL, 2, &readTouchhandle);
   xTaskCreate(turnToAngle, "motorTest", 200, NULL, 2, &turnToAnglehandle);
-  xTaskCreate(pid, "pid computation", 200, NULL, 2, &pidhandle);
+  xTaskCreate(readPots, "potentiometers", 200, NULL, 2, &readPotshandle);
   while (1) {
   }
 }
@@ -77,50 +77,54 @@ void turnToAngle(void *pvParameters) {
   // set servo to 90 degrees
   servoX.attach(servoXpin);
   servoY.attach(servoYpin);
-  servoX.write(90);
-  servoY.write(90);
+  
+  servoX.write(flatX);
+  servoY.write(flatY);
+  
   vTaskDelay(500 / portTICK_PERIOD_MS);
-//  servoX.detach();
-//  servoY.detach();
+  
+  servoX.detach();
+  servoY.detach();  
 
-//  // set motor timers up 
-//  SETMOTOR1DDR;
-//  SETMOTOR2DDR;
-//  TIMER4ON;
-//  TIMER3ON;
-//  TIMER4REGA = 0; TIMER4REGB = 0;
-//  TIMER3REGA = 0; TIMER3REGB = 0;
-//  TCCR4A = (TCCR4A & B00111100) | B10000010;   //Phase and frequency correct, Non-inverting mode, TOP defined by ICR1
-//  TCCR4B = (TCCR4B & B11100000) | B00010001;   //No prescale
-//  TCCR3A = (TCCR3A & B00111100) | B10000010;   //Phase and frequency correct, Non-inverting mode, TOP defined by ICR1
-//  TCCR3B = (TCCR3B & B11100000) | B00010001;   //No prescale
-//  ICR4 = 0xFFFF; 
-//  ICR3 = 0xFFFF;
-//  TIMERCOMPARE4A = (CLOCKFREQ / (TWO*666)) + 1;
-//  TIMERCOMPARE3A = (CLOCKFREQ / (TWO*666)) + 1;     
+  pidX.SetMode(AUTOMATIC);
+  pidY.SetMode(AUTOMATIC);
+
+  pidX.SetSampleTime(Ts); 
+  pidY.SetSampleTime(Ts); 
+
+  pidX.SetOutputLimits(flatX-5, flatX+5);
+  pidY.SetOutputLimits(flatY-5, flatY+5);
+  
+  pidX.SetTunings(Kp, Ki, Kd);   
+  pidY.SetTunings(Kp, Ki, Kd);  
 
     // setpoints
-    setpointX = 440;
+    setpointX = 450;
     setpointY = 530;
   while (1) {
-    vTaskDelay(50 / portTICK_PERIOD_MS);
-    servoX.write(servoXangle);
+    if (p.z > 20) {
+      servoX.attach(servoXpin);
+      servoY.attach(servoYpin);  
+      pidX.Compute();
+      pidY.Compute();
+      noTouchCount = 0;
+    } else {
+      noTouchCount++; 
+      if(noTouchCount == 150) {
+          noTouchCount++; 
+          servoX.attach(servoXpin);
+          servoY.attach(servoYpin); 
+          servoX.write(flatX);
+          servoY.write(flatY);
+          vTaskDelay(250 / portTICK_PERIOD_MS);
+          servoX.detach();
+          servoY.detach();
+      }
+    }
+    servoX.write(servoXangle); 
     servoY.write(servoYangle);
-//    if (inputX == setpointX) {
-//          TIMERCOMPARE4A = (CLOCKFREQ / (TWO*666)) + 1; // x 
-//       } else if (inputX > setpointX) {
-//          TIMERCOMPARE4A = (CLOCKFREQ / (TWO*600)) + 1;
-//       } else if (inputX < setpointX) {
-//          TIMERCOMPARE4A = (CLOCKFREQ / (TWO*700)) + 1;
-//       }
-//
-//       if (inputY == setpointY) {
-//          TIMERCOMPARE3A = (CLOCKFREQ / (TWO*666)) + 1; // x 
-//       } else if (inputY > setpointY) {
-//          TIMERCOMPARE3A = (CLOCKFREQ / (TWO*600)) + 1;
-//       } else if (inputY < setpointY) {
-//          TIMERCOMPARE3A = (CLOCKFREQ / (TWO*700)) + 1;
-//       }
+    servoX.detach();
+    servoY.detach(); 
   }
 }
 
@@ -129,16 +133,19 @@ void turnToAngle(void *pvParameters) {
  *     This funciton computes the pid output.
  *     @author Connor Lowe
  */
-void pid(void *pvParameters) {
-  pidX.SetMode(AUTOMATIC);
-  pidY.SetMode(AUTOMATIC);
-  pidX.SetTunings(Kp, Ki, Kd);   
-  pidY.SetTunings(Kp, Ki, Kd);  
+void readPots(void *pvParameters) { 
+  
   vTaskDelay(500 / portTICK_PERIOD_MS); 
+  
   while (1) {
-    pidX.Compute();
-    pidY.Compute();
-    vTaskDelay(50 / portTICK_PERIOD_MS);
+//    Kp = map(analogRead(A15), 0, 1023, 0, 1000)/1000.0;
+//    Kd = map(analogRead(A14), 0, 1023, 0, 1000)/1000.0;
+//    Ki = map(analogRead(A13), 0, 1023, 0, 1000)/1000.0;
+//    pidX.SetTunings(Kp, Ki, Kd);   
+//    pidY.SetTunings(Kp, Ki, Kd); 
+    Serial.print(setpointX);
+    Serial.print("\t");
+    Serial.println(inputXout[0]); 
   }
 }
 
@@ -149,9 +156,11 @@ void pid(void *pvParameters) {
  */
 void readTouch(void *pvParameters) {  
   while (1) {
+    p = ts.getPoint();   //measure pressure on plate
+     
     // Read y
       // read from this pin
-      pinMode(xHigh, INPUT);
+      pinMode(xHigh, INPUT_PULLUP);
       
       // make tristate
       pinMode(xLow, INPUT);
@@ -164,11 +173,13 @@ void readTouch(void *pvParameters) {
       digitalWrite(yLow,  LOW);
   
       // read voltage for y in
-      inputY = analogRead(xHigh);
+      inputY[0] = analogRead(xHigh);
+      inputYout[0] = a[0]*inputYout[1] + a[1]*inputYout[2] +
+               b[0]*inputY[0] + b[1]*inputY[1] + b[2]*inputY[2];
 
     // Read x
       // read from this pin
-      pinMode(yHigh, INPUT);
+      pinMode(yHigh, INPUT_PULLUP);
       
       // make tristate
       pinMode(yLow, INPUT);
@@ -181,11 +192,18 @@ void readTouch(void *pvParameters) {
       digitalWrite(xLow,  LOW);
   
       // read voltage for y in
-      inputX = analogRead(yHigh);
-      vTaskDelay(50 / portTICK_PERIOD_MS);
+      inputX[0] = analogRead(yHigh);
+      inputXout[0] = a[0]*inputXout[1] + a[1]*inputXout[2] +
+               b[0]*inputX[0] + b[1]*inputX[1] + b[2]*inputX[2];
+     
 
-    Serial.println(inputY);
-    Serial.println(inputX);
+      for(int i = 1; i >= 0; i--){
+        inputXout[i+1] = inputXout[i]; // store xi
+        inputX[i+1] = inputX[i]; // store yi
+        inputYout[i+1] = inputYout[i]; // store xi
+        inputY[i+1] = inputY[i]; // store yi
+      }
+
   }
 }
 
