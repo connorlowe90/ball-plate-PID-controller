@@ -1,3 +1,8 @@
+# DUE TO RIGIDITY OF SYSTEM THIS PROJECT IS PUT ON HOLD
+I believe the setup I have may be introducing error as it trys to fix it. I am looking to machine the base and motor mounts
+	out of AL to increase strength and also reduce the length of the arms that hold the plate up, as this will also reduce
+	twist in the system. This project is expected to complete around 
+
 # ball-plate-PID-controller
 Ball &amp; Plate PID Controller
 
